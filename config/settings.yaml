@@ -1,0 +1,77 @@
+# Unreal RAG Configuration
+
+# Unreal Engine paths
+unreal_engine:
+  engine_path: ~/Documents/ue_56/Engine
+  source_path: ~/Documents/ue_56/Engine/Source
+  docs_path: ~/Documents/ue_56/Engine/Documentation
+
+# Document collection settings
+collection:
+  markdown_extensions:
+    - .md
+    - .markdown
+  udn_extensions:
+    - .udn
+  exclude_patterns:
+    - "*/DerivedDataCache/*"
+    - "*/Intermediate/*"
+
+# PageIndex settings
+pageindex:
+  model: "gpt-4o-2024-11-20"
+  max_pages_per_node: 10
+  max_tokens_per_node: 20000
+  toc_check_pages: 20
+  add_node_id: true
+  add_node_summary: true
+  add_doc_description: true
+
+# Categorization rules
+categorization:
+  coding-standards:
+    - "CodingStandard"
+    - "coding_standard"
+    - "StyleGuide"
+    - "style_guide"
+    - "CONTRIBUTING"
+  
+  api-reference:
+    - "API"
+    - "Reference"
+    - "docs/"
+    - "Documentation/"
+  
+  guides:
+    - "Guide"
+    - "Tutorial"
+    - "HowTo"
+    - "README"
+  
+  debugging:
+    - "Debug"
+    - "Test"
+    - "Error"
+    - "Troubleshoot"
+
+# RAG query settings
+query:
+  max_results: 5
+  min_relevance_score: 0.7
+  context_window: 4000
+
+# Agent settings
+agents:
+  ue_dev_agent:
+    primary_categories:
+      - coding-standards
+      - api-reference
+      - guides
+    temperature: 0.7
+  
+  qa_agent:
+    primary_categories:
+      - debugging
+      - api-reference
+      - guides
+    temperature: 0.3
