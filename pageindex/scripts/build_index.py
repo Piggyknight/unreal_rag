@@ -43,16 +43,20 @@ class PageIndexBuilder:
         # 加载环境变量
         load_dotenv()
         
-        # 检查 API key
-        api_key = os.getenv('CHATGPT_API_KEY')
+        # 检查 API key (支持 ZAI_API_KEY 或 CHATGPT_API_KEY)
+        api_key = os.getenv('ZAI_API_KEY') or os.getenv('CHATGPT_API_KEY')
         if not api_key or api_key == 'your_openai_api_key_here':
             raise ValueError(
-                "❌ 未配置 CHATGPT_API_KEY\n"
-                "请编辑 .env 文件并添加您的 OpenAI API key:\n"
+                "❌ 未配置 API Key\n"
+                "请编辑 .env 文件并添加您的 API key:\n"
+                "  ZAI_API_KEY=your-glm-key-here\n"
+                "  或\n"
                 "  CHATGPT_API_KEY=sk-your-key-here"
             )
         
-        print(f"✅ API Key 已配置: {api_key[:10]}...")
+        # 判断使用的API类型
+        api_type = "GLM" if os.getenv('ZAI_API_KEY') else "OpenAI"
+        print(f"✅ API Key 已配置 ({api_type}): {api_key[:10]}...")
     
     def _load_config(self, config_path: str) -> Dict:
         """加载配置"""
@@ -99,24 +103,25 @@ class PageIndexBuilder:
             
             print(f"  📄 处理: {doc_name}")
             
+            # 调用 PageIndex 的 md_to_tree 函数
+            import asyncio
+            
             # 获取配置参数
             pageindex_config = self.config.get('pageindex', {})
             model = pageindex_config.get('model', 'glm-4-flash')
             
             print(f"  📄 处理: {doc_name} (模型: {model})")
             
-            # 调用 PageIndex 的 process_markdown
-            # 注意：这里需要根据实际的 PageIndex API 调整
-            result = run_pageindex.process_markdown(
+            # 调用 md_to_tree
+            result = asyncio.run(run_pageindex.md_to_tree(
                 md_path=doc_path,
                 model=model,
-                max_pages_per_node=pageindex_config.get('max_pages_per_node', 10),
-                max_tokens_per_node=pageindex_config.get('max_tokens_per_node', 20000),
-                toc_check_pages=pageindex_config.get('toc_check_pages', 20),
-                if_add_node_id=pageindex_config.get('add_node_id', True),
+                if_thinning=False,
                 if_add_node_summary=pageindex_config.get('add_node_summary', True),
-                if_add_doc_description=pageindex_config.get('add_doc_description', True)
-            )
+                if_add_doc_description=pageindex_config.get('add_doc_description', True),
+                if_add_node_text=False,
+                if_add_node_id=pageindex_config.get('add_node_id', True)
+            ))
             
             # 保存索引
             with open(output_file, 'w', encoding='utf-8') as f:
