@@ -101,12 +101,15 @@ class PageIndexBuilder:
             
             # 获取配置参数
             pageindex_config = self.config.get('pageindex', {})
+            model = pageindex_config.get('model', 'glm-4-flash')
+            
+            print(f"  📄 处理: {doc_name} (模型: {model})")
             
             # 调用 PageIndex 的 process_markdown
             # 注意：这里需要根据实际的 PageIndex API 调整
             result = run_pageindex.process_markdown(
                 md_path=doc_path,
-                model=pageindex_config.get('model', 'gpt-4o-2024-11-20'),
+                model=model,
                 max_pages_per_node=pageindex_config.get('max_pages_per_node', 10),
                 max_tokens_per_node=pageindex_config.get('max_tokens_per_node', 20000),
                 toc_check_pages=pageindex_config.get('toc_check_pages', 20),
