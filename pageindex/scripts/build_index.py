@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Build PageIndex for all UE documentation
-Generates tree structures for all markdown documents
+使用 PageIndex 构建 UE 文档索引
+支持 Markdown 文件的批量索引构建
 """
 
 import os
@@ -13,20 +13,23 @@ from typing import List, Dict
 import yaml
 from dotenv import load_dotenv
 
-# Add PageIndex to path
+# 添加 PageIndex 到路径
 sys.path.insert(0, str(Path(__file__).parent.parent / 'PageIndex'))
 
+# 检查 PageIndex 是否可用
 try:
-    from run_pageindex import process_pdf, process_markdown
-except ImportError:
-    print("⚠️  PageIndex not found. Please clone it first:")
-    print("   cd ~/Documents/unreal_rag/pageindex")
-    print("   git clone https://github.com/VectifyAI/PageIndex.git")
-    sys.exit(1)
+    # PageIndex 使用 run_pageindex.py 的 process_markdown 函数
+    import run_pageindex
+    PAGEINDEX_AVAILABLE = True
+    print("✅ PageIndex 已加载")
+except ImportError as e:
+    print(f"⚠️  PageIndex 导入失败: {e}")
+    print("   请确保 PageIndex 已正确安装")
+    PAGEINDEX_AVAILABLE = False
 
 
 class PageIndexBuilder:
-    """Builds PageIndex tree structures for UE documentation"""
+    """使用 PageIndex 构建 UE 文档索引"""
     
     def __init__(self, config_path: str = None):
         self.config = self._load_config(config_path)
@@ -37,25 +40,29 @@ class PageIndexBuilder:
             'errors': []
         }
         
-        # Load environment variables
+        # 加载环境变量
         load_dotenv()
         
-        # Check for API key
-        if not os.getenv('CHATGPT_API_KEY'):
+        # 检查 API key
+        api_key = os.getenv('CHATGPT_API_KEY')
+        if not api_key or api_key == 'your_openai_api_key_here':
             raise ValueError(
-                "CHATGPT_API_KEY not found. Please set it in .env file:\n"
-                "  echo 'CHATGPT_API_KEY=your_key_here' > .env"
+                "❌ 未配置 CHATGPT_API_KEY\n"
+                "请编辑 .env 文件并添加您的 OpenAI API key:\n"
+                "  CHATGPT_API_KEY=sk-your-key-here"
             )
+        
+        print(f"✅ API Key 已配置: {api_key[:10]}...")
     
     def _load_config(self, config_path: str) -> Dict:
-        """Load configuration"""
+        """加载配置"""
         if config_path and os.path.exists(config_path):
             with open(config_path, 'r') as f:
                 return yaml.safe_load(f)
         return {}
     
     def find_markdown_files(self, docs_dir: str) -> List[str]:
-        """Find all markdown files in directory"""
+        """查找所有 Markdown 文件"""
         md_files = []
         for root, dirs, files in os.walk(docs_dir):
             for file in files:
@@ -70,18 +77,18 @@ class PageIndexBuilder:
         category: str = None
     ) -> bool:
         """
-        Build PageIndex for a single document
+        为单个文档构建 PageIndex
         
         Args:
-            doc_path: Path to markdown file
-            output_dir: Directory to save index
-            category: Optional category name
+            doc_path: Markdown 文件路径
+            output_dir: 输出目录
+            category: 可选的分类名称
         
         Returns:
-            True if successful, False otherwise
+            成功返回 True，失败返回 False
         """
         try:
-            # Generate output filename
+            # 生成输出文件名
             doc_name = Path(doc_path).stem
             if category:
                 output_file = os.path.join(output_dir, category, f"{doc_name}.json")
@@ -90,75 +97,89 @@ class PageIndexBuilder:
             
             os.makedirs(os.path.dirname(output_file), exist_ok=True)
             
-            # Build index using PageIndex
-            print(f"  📄 Processing: {doc_name}")
+            print(f"  📄 处理: {doc_name}")
             
-            index_result = process_markdown(
+            # 获取配置参数
+            pageindex_config = self.config.get('pageindex', {})
+            
+            # 调用 PageIndex 的 process_markdown
+            # 注意：这里需要根据实际的 PageIndex API 调整
+            result = run_pageindex.process_markdown(
                 md_path=doc_path,
-                model=self.config.get('pageindex', {}).get('model', 'gpt-4o-2024-11-20'),
-                max_pages_per_node=self.config.get('pageindex', {}).get('max_pages_per_node', 10),
-                max_tokens_per_node=self.config.get('pageindex', {}).get('max_tokens_per_node', 20000),
-                toc_check_pages=self.config.get('pageindex', {}).get('toc_check_pages', 20),
-                if_add_node_id=self.config.get('pageindex', {}).get('add_node_id', True),
-                if_add_node_summary=self.config.get('pageindex', {}).get('add_node_summary', True),
-                if_add_doc_description=self.config.get('pageindex', {}).get('add_doc_description', True)
+                model=pageindex_config.get('model', 'gpt-4o-2024-11-20'),
+                max_pages_per_node=pageindex_config.get('max_pages_per_node', 10),
+                max_tokens_per_node=pageindex_config.get('max_tokens_per_node', 20000),
+                toc_check_pages=pageindex_config.get('toc_check_pages', 20),
+                if_add_node_id=pageindex_config.get('add_node_id', True),
+                if_add_node_summary=pageindex_config.get('add_node_summary', True),
+                if_add_doc_description=pageindex_config.get('add_doc_description', True)
             )
             
-            # Save index
+            # 保存索引
             with open(output_file, 'w', encoding='utf-8') as f:
-                json.dump(index_result, f, indent=2, ensure_ascii=False)
+                json.dump(result, f, indent=2, ensure_ascii=False)
             
+            print(f"     ✅ 已保存: {output_file}")
             return True
             
         except Exception as e:
-            self.stats['errors'].append(f"{doc_path}: {str(e)}")
+            error_msg = f"{doc_path}: {str(e)}"
+            self.stats['errors'].append(error_msg)
+            print(f"     ❌ 失败: {str(e)}")
             return False
     
     def build_all_indexes(
         self,
         docs_dir: str,
         output_dir: str,
-        categorize: bool = True
+        categorize: bool = True,
+        limit: int = None
     ):
         """
-        Build PageIndex for all documents
+        为所有文档构建 PageIndex
         
         Args:
-            docs_dir: Directory containing markdown files
-            output_dir: Directory to save indexes
-            categorize: Whether to organize by category
+            docs_dir: Markdown 文件目录
+            output_dir: 输出目录
+            categorize: 是否按类别组织
+            limit: 限制处理的文档数量（用于测试）
         """
-        print(f"🔍 Scanning for markdown files in {docs_dir}...")
+        print(f"\n🔍 扫描文档目录: {docs_dir}")
         md_files = self.find_markdown_files(docs_dir)
         self.stats['total_docs'] = len(md_files)
         
-        print(f"📄 Found {len(md_files)} documents\n")
+        print(f"📄 找到 {len(md_files)} 个文档\n")
+        
+        if limit:
+            md_files = md_files[:limit]
+            print(f"⚠️  测试模式：仅处理前 {limit} 个文档\n")
         
         if categorize:
-            # Categorize documents
+            # 按类别分类文档
             categories = self.config.get('categorization', {})
             
             for category, keywords in categories.items():
-                print(f"\n📚 Processing {category}...")
+                print(f"\n📚 处理分类: {category}")
                 category_dir = os.path.join(output_dir, category)
                 os.makedirs(category_dir, exist_ok=True)
                 
-                # Find matching docs
+                # 查找匹配的文档
                 matched_files = []
                 for md_file in md_files:
                     file_lower = md_file.lower()
                     if any(keyword.lower() in file_lower for keyword in keywords):
                         matched_files.append(md_file)
                 
-                # Build indexes
+                print(f"   找到 {len(matched_files)} 个匹配文档")
+                
+                # 构建索引
                 for md_file in matched_files:
                     if self.build_index_for_doc(md_file, category_dir, category):
                         self.stats['indexed'] += 1
                     else:
                         self.stats['failed'] += 1
-        
         else:
-            # Process all without categorization
+            # 不分类，处理所有文档
             for md_file in md_files:
                 if self.build_index_for_doc(md_file, output_dir):
                     self.stats['indexed'] += 1
@@ -166,11 +187,13 @@ class PageIndexBuilder:
                     self.stats['failed'] += 1
         
         self._print_summary()
-        self._generate_combined_index(output_dir)
+        
+        if categorize:
+            self._generate_combined_index(output_dir)
     
     def _generate_combined_index(self, output_dir: str):
-        """Generate a combined index file for all documents"""
-        print("\n🔄 Generating combined index...")
+        """生成组合索引文件"""
+        print("\n🔄 生成组合索引...")
         
         combined_index = {
             'version': '1.0',
@@ -178,7 +201,7 @@ class PageIndexBuilder:
             'categories': {}
         }
         
-        # Scan all generated indexes
+        # 扫描所有生成的索引
         for category_dir in Path(output_dir).iterdir():
             if category_dir.is_dir():
                 category_name = category_dir.name
@@ -189,62 +212,74 @@ class PageIndexBuilder:
                         str(index_file.relative_to(output_dir))
                     )
         
-        # Save combined index
+        # 保存组合索引
         combined_file = os.path.join(output_dir, 'combined_index.json')
         with open(combined_file, 'w', encoding='utf-8') as f:
             json.dump(combined_index, f, indent=2)
         
-        print(f"✅ Combined index saved to {combined_file}")
+        print(f"✅ 组合索引已保存: {combined_file}")
     
     def _print_summary(self):
-        """Print build summary"""
-        print("\n" + "="*50)
-        print("📊 PageIndex Build Summary")
-        print("="*50)
-        print(f"Total documents:   {self.stats['total_docs']}")
-        print(f"Indexed:           {self.stats['indexed']}")
-        print(f"Failed:            {self.stats['failed']}")
+        """打印构建摘要"""
+        print("\n" + "="*60)
+        print("📊 PageIndex 构建摘要")
+        print("="*60)
+        print(f"总文档数:       {self.stats['total_docs']}")
+        print(f"已索引:         {self.stats['indexed']}")
+        print(f"失败:           {self.stats['failed']}")
         
         if self.stats['errors']:
-            print(f"\n❌ Errors ({len(self.stats['errors'])}):")
+            print(f"\n❌ 错误 ({len(self.stats['errors'])}):")
             for error in self.stats['errors'][:5]:
                 print(f"  - {error}")
+            if len(self.stats['errors']) > 5:
+                print(f"  ... 还有 {len(self.stats['errors'])-5} 个错误")
         
-        print("="*50 + "\n")
+        print("="*60 + "\n")
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Build PageIndex for UE documentation'
+        description='使用 PageIndex 构建 UE 文档索引'
     )
     parser.add_argument(
         '--config',
-        default='../config/settings.yaml',
-        help='Path to configuration file'
+        default='../../config/settings.yaml',
+        help='配置文件路径'
     )
     parser.add_argument(
         '--docs-dir',
         default='../../docs/converted/markdown',
-        help='Directory containing markdown files'
+        help='Markdown 文件目录'
     )
     parser.add_argument(
         '--output',
         default='../generated_indexes',
-        help='Output directory for indexes'
+        help='索引输出目录'
     )
     parser.add_argument(
         '--no-categorize',
         action='store_true',
-        help='Disable document categorization'
+        help='禁用文档分类'
+    )
+    parser.add_argument(
+        '--limit',
+        type=int,
+        help='限制处理的文档数量（测试用）'
     )
     
     args = parser.parse_args()
+    
+    if not PAGEINDEX_AVAILABLE:
+        print("❌ PageIndex 不可用，无法继续")
+        sys.exit(1)
     
     builder = PageIndexBuilder(args.config)
     builder.build_all_indexes(
         args.docs_dir,
         args.output,
-        categorize=not args.no_categorize
+        categorize=not args.no_categorize,
+        limit=args.limit
     )
 
 
