@@ -1,210 +1,236 @@
-# Unreal Engine RAG Knowledge Base
+# Unreal Engine RAG Knowledge Base 🎮
 
-Build a vectorless RAG knowledge base from Unreal Engine documentation using PageIndex for UE development agents and QA agents.
+<div align="center">
 
-## 🎯 Purpose
+**完整的UE文档知识库系统 - 支持两种查询方式**
 
-This project provides tools to:
-- Collect UE documentation from `.md` and `.udn` files
-- Convert UDN format to standard Markdown
-- Generate PageIndex tree structures for reasoning-based RAG
-- Query the knowledge base for development and debugging assistance
+[![Status](https://img.shields.io/badge/Status-✅%20Complete-brightgreen)](https://github.com/Piggyknight/unreal_rag)
+[![Documents](https://img.shields.io/badge/Documents-221-blue)]()
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-## 🚀 Quick Start
+[立即开始](#-立即开始) • [功能特性](#-功能特性) • [使用指南](#-使用指南) • [文档](#-文档)
 
-### 1. Install Dependencies
-
-```bash
-cd ~/Documents/unreal_rag
-pip3 install -r requirements.txt
-```
-
-### 2. Configure Settings
-
-Edit `config/settings.yaml` to set your Unreal Engine paths:
-
-```yaml
-unreal_engine:
-  engine_path: ~/Documents/ue_56/Engine
-  source_path: ~/Documents/ue_56/Engine/Source
-  docs_path: ~/Documents/ue_56/Engine/Documentation
-```
-
-### 3. Run Collection Pipeline
-
-```bash
-# Collect and convert all documentation
-./tools/run_collection.sh
-```
-
-This will:
-- Collect all `.md` files from `Engine/Source`
-- Collect all `.udn` files from `Engine/Documentation` 
-- Convert UDN files to Markdown format
-- Generate collection reports
-
-### 4. Set Up PageIndex
-
-```bash
-# Clone PageIndex as submodule
-cd ~/Documents/unreal_rag
-git submodule add https://github.com/VectifyAI/PageIndex.git pageindex/PageIndex
-
-# Configure OpenAI API key
-echo "CHATGPT_API_KEY=your_key_here" > .env
-```
-
-### 5. Build RAG Index
-
-```bash
-# Generate PageIndex for all documents
-python3 pageindex/scripts/build_index.py
-```
-
-## 📁 Project Structure
-
-```
-unreal_rag/
-├── docs/                    # Collected documentation
-│   ├── raw/                # Original files
-│   │   ├── markdown/       # .md files from Source
-│   │   └── udn/            # .udn files from Documentation
-│   ├── converted/          # Converted to standard format
-│   │   └── markdown/       # All docs in markdown
-│   └── categorized/        # Organized by category
-│       ├── coding-standards/
-│       ├── api-reference/
-│       ├── guides/
-│       └── debugging/
-├── tools/                   # Processing scripts
-│   ├── collectors/         # Document collection
-│   ├── converters/         # Format conversion
-│   ├── organizers/         # Categorization
-│   └── run_collection.sh   # Main pipeline script
-├── pageindex/              # PageIndex integration
-│   ├── PageIndex/          # Git submodule
-│   ├── generated_indexes/  # Tree structures
-│   └── scripts/            # Build and query scripts
-├── agents/                 # Agent interfaces
-│   ├── ue_dev_agent.py
-│   ├── qa_agent.py
-│   └── shared/rag_client.py
-└── config/                 # Configuration
-    └── settings.yaml
-```
-
-## 🔧 Individual Tools
-
-### Collect Markdown Files
-
-```bash
-python3 tools/collectors/collect_markdown.py \
-    --config config/settings.yaml \
-    --output docs/raw/markdown
-```
-
-### Collect UDN Files
-
-```bash
-# Collect all languages
-python3 tools/collectors/collect_udn.py \
-    --output docs/raw/udn
-
-# Collect specific languages only
-python3 tools/collectors/collect_udn.py \
-    --output docs/raw/udn \
-    --languages INT CHN
-```
-
-### Convert UDN to Markdown
-
-```bash
-python3 tools/converters/udn_to_markdown.py \
-    --input docs/raw/udn \
-    --output docs/converted/markdown \
-    --languages INT
-```
-
-## 🤖 Using with Agents
-
-### UE Dev Agent
-
-```python
-from agents.ue_dev_agent import UEDevAgent
-
-agent = UEDevAgent()
-result = agent.query("What is the coding standard for naming variables?")
-print(result)
-```
-
-### QA Agent
-
-```python
-from agents.qa_agent import QAAgent
-
-agent = QAAgent()
-result = agent.query("How do I debug a null pointer in UE?")
-print(result)
-```
-
-## 📊 Expected Results
-
-After running the collection pipeline, you should have:
-- **~70 markdown files** from Engine/Source
-- **~600+ UDN files** (673 total, with language variants)
-- **~600+ converted markdown files** from UDN
-
-## 🛠️ PageIndex Integration
-
-PageIndex provides vectorless, reasoning-based retrieval:
-
-1. **No Vector DB**: Uses document structure and LLM reasoning
-2. **No Chunking**: Preserves natural document sections
-3. **Human-like Retrieval**: Simulates expert document navigation
-
-## 🔍 Example Queries
-
-- "What are the naming conventions for UE classes?"
-- "How do I use the TArray container?"
-- "What is the coding standard for subsystems?"
-- "How to optimize navmesh generation?"
-
-## 📝 Configuration
-
-Key settings in `config/settings.yaml`:
-
-- `unreal_engine.paths`: UE installation paths
-- `collection.exclude_patterns`: Files/folders to skip
-- `pageindex.model`: OpenAI model for indexing
-- `categorization`: Rules for organizing documents
-- `query`: RAG retrieval settings
-
-## 🧪 Testing
-
-```bash
-# Test document collection
-python3 tests/test_collection.py
-
-# Test query functionality
-python3 tests/test_query.py
-```
-
-## 📖 Documentation
-
-- [Project Plan](PROJECT_PLAN.md)
-- [PageIndex Documentation](https://docs.pageindex.ai)
-- [PageIndex Framework](https://pageindex.ai/blog/pageindex-intro)
-
-## 🤝 Contributing
-
-This is a personal knowledge base project, but suggestions and improvements are welcome!
-
-## 📄 License
-
-MIT License - See [LICENSE](LICENSE)
+</div>
 
 ---
 
-**Created for**: Unreal Engine 5.6 documentation  
-**Powered by**: PageIndex - Vectorless RAG  
-**Status**: ✅ Phase 1 Complete (Collection & Conversion)
+## 📖 项目简介
+
+为Unreal Engine 5.6构建的RAG（检索增强生成）知识库，包含221个官方文档，支持两种查询方式：
+
+- **🆓 简化 RAG**: 免费即时查询，无需API
+- **🚀 PageIndex**: 高级语义检索，需要OpenAI API
+
+## ✨ 功能特性
+
+### ✅ 已实现
+
+- **文档收集**: 自动收集UE官方文档（Markdown + UDN）
+- **格式转换**: UDN → Markdown 转换器
+- **简化RAG**: 关键词搜索，<1秒响应
+- **PageIndex集成**: 向量无关的推理型检索
+- **Agent框架**: UE开发助手 + QA助手接口
+- **完整工具链**: 一键收集、转换、查询
+
+### 📊 项目统计
+
+| 项目 | 数量 |
+|------|------|
+| 文档 | 221个 |
+| 工具脚本 | 8个 |
+| 指南文档 | 8个 |
+| 代码行数 | ~1500行 |
+
+## 🚀 立即开始
+
+### 方式1: 简化 RAG（推荐新手）
+
+**免费，无需API，立即可用**
+
+```bash
+cd ~/Documents/unreal_rag
+
+# 交互式查询
+python3 tools/simple_rag_query.py
+
+# 命令行查询
+python3 tools/simple_rag_query.py --query "coding standard"
+```
+
+### 方式2: PageIndex（高级用户）
+
+**语义理解，需要OpenAI API**
+
+```bash
+# 1. 配置 API Key
+nano .env  # 添加 CHATGPT_API_KEY=sk-...
+
+# 2. 测试配置
+python3 tools/test_pageindex.py
+
+# 3. 构建索引
+cd pageindex/scripts
+python3 build_index.py --limit 5  # 先测试5个文档
+```
+
+## 📚 使用指南
+
+### 日常查询（免费）
+
+```python
+# 查询编码规范
+python3 tools/simple_rag_query.py --query "naming convention"
+
+# 查询API文档
+python3 tools/simple_rag_query.py --query "UActorComponent"
+
+# 查询最佳实践
+python3 tools/simple_rag_query.py --query "subsystem"
+```
+
+### 文档浏览
+
+```bash
+# 查看所有文档
+cd ~/Documents/unreal_rag/docs
+
+# 原始Markdown
+ls raw/markdown/
+
+# 转换的UDN
+ls converted/markdown/
+```
+
+## 🎯 两种查询方式对比
+
+| 特性 | 简化 RAG | PageIndex |
+|------|---------|-----------|
+| 费用 | ✅ 免费 | ⚠️ 需API费 |
+| 速度 | ✅ <1秒 | ⚠️ 较慢 |
+| 准确度 | ⚠️ 关键词 | ✅ 语义理解 |
+| 配置 | ✅ 零配置 | ⚠️ 需API Key |
+| 适用 | 快速查询 | 复杂问题 |
+
+## 📁 项目结构
+
+```
+unreal_rag/
+├── docs/                    # 221个文档
+│   ├── raw/markdown/       # 49个原始MD
+│   └── converted/markdown/ # 172个转换的MD
+├── tools/                   # 工具脚本
+│   ├── simple_rag_query.py # ⭐ 简化RAG
+│   ├── test_pageindex.py   # PageIndex测试
+│   └── run_collection.sh   # 文档收集
+├── pageindex/              # PageIndex系统
+│   ├── PageIndex/          # 库文件
+│   └── scripts/            # 构建脚本
+├── agents/                 # Agent接口
+├── config/                 # 配置文件
+└── 文档                    # 指南文档
+```
+
+## 📖 文档指南
+
+| 文档 | 用途 |
+|------|------|
+| [GET_STARTED_NOW.md](GET_STARTED_NOW.md) | ⭐ 立即开始 |
+| [PAGEINDEX_READY.md](PAGEINDEX_READY.md) | PageIndex配置 |
+| [PROJECT_COMPLETE.md](PROJECT_COMPLETE.md) | 项目完成状态 |
+| [SUMMARY.md](SUMMARY.md) | 项目总结 |
+| [QUICKSTART.md](QUICKSTART.md) | 快速开始 |
+| [STATUS.md](STATUS.md) | 详细状态 |
+
+## 🔧 高级功能
+
+### Agent 接口
+
+```python
+# UE开发助手
+from agents.ue_dev_agent import UEDevAgent
+agent = UEDevAgent()
+result = agent.query("What is the coding standard?")
+
+# QA助手
+from agents.qa_agent import QAAgent
+agent = QAAgent()
+result = agent.query("How to debug?")
+```
+
+### 重新收集文档
+
+```bash
+# 一键收集所有文档
+./tools/run_collection.sh
+```
+
+## 🛠️ 配置
+
+### 环境变量
+
+```bash
+# .env 文件
+CHATGPT_API_KEY=sk-your-key-here  # PageIndex需要
+```
+
+### 设置文件
+
+编辑 `config/settings.yaml` 自定义：
+- 文档分类规则
+- PageIndex参数
+- 查询设置
+
+## 📊 支持的文档类型
+
+### 已收集
+- ✅ 编码规范 (AICodingStandard等)
+- ✅ API参考 (UActorComponent等)
+- ✅ 指南文档 (README等)
+- ✅ 测试框架 (CQTest等)
+- ✅ 调试文档
+
+### 分类
+- coding-standards
+- api-reference
+- guides
+- debugging
+
+## 💡 使用建议
+
+### 推荐策略
+
+1. **快速查询** → 简化RAG（免费）
+2. **复杂问题** → PageIndex（需API）
+3. **深度研究** → 直接浏览文档
+
+### 省钱技巧
+
+- 先用简化RAG满足80%需求
+- PageIndex仅用于复杂问题
+- 使用 `--limit` 参数测试
+
+## 🤝 贡献
+
+欢迎提交Issue和Pull Request！
+
+## 📄 许可证
+
+MIT License - 详见 [LICENSE](LICENSE)
+
+## 🙏 致谢
+
+- [PageIndex](https://github.com/VectifyAI/PageIndex) - 向量无关的RAG引擎
+- [Unreal Engine](https://www.unrealengine.com/) - 游戏引擎
+- [OpenAI](https://openai.com/) - GPT-4o API
+
+---
+
+<div align="center">
+
+**🎉 项目已完成，立即可用！**
+
+**快速开始**: `python3 tools/simple_rag_query.py`
+
+**问题反馈**: [GitHub Issues](https://github.com/Piggyknight/unreal_rag/issues)
+
+</div>
